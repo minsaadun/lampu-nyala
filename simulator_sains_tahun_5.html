@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulator Sains Tahun 5: Elektrik & Perubahan Tenaga</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        display: ['Fredoka', 'cursive'],
+                    },
+                    colors: {
+                        sains: {
+                            blue: '#0284c7',
+                            yellow: '#f59e0b',
+                            green: '#10b981',
+                            purple: '#8b5cf6',
+                            dark: '#0f172a',
+                            light: '#f0f9ff'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #fef3c7 100%);
+            min-height: 100vh;
+        }
+        .glow-yellow {
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.7);
+        }
+        .glow-blue {
+            box-shadow: 0 0 20px rgba(2, 132, 199, 0.4);
+        }
+        .tab-btn.active {
+            background-color: #0284c7;
+            color: white;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+        /* Custom pulse animation */
+        @keyframes electronFlow {
+            0% { stroke-dashoffset: 40; }
+            100% { stroke-dashoffset: 0; }
+        }
+        .flowing-wire {
+            stroke-dasharray: 8, 8;
+            animation: electronFlow 0.8s linear infinite;
+        }
+        @keyframes bulbGlow {
+            0%, 100% { filter: drop-shadow(0px 0px 8px #f59e0b); }
+            50% { filter: drop-shadow(0px 0px 20px #f59e0b); }
+        }
+        .bulb-active {
+            animation: bulbGlow 1.5s infinite;
+        }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Header Utama -->
+    <header class="bg-white/90 backdrop-blur-md border-b border-sky-100 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 bg-amber-400 rounded-2xl flex items-center justify-center text-slate-900 font-bold text-2xl shadow-md transform rotate-3">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div>
+                    <h1 class="font-display text-xl sm:text-2xl font-bold text-slate-900 leading-tight">
+                        Simulator Sains Tahun 5
+                    </h1>
+                    <p class="text-xs sm:text-sm font-medium text-sky-600">
+                        Topik: Elektrik & Perubahan Bentuk Tenaga
+                    </p>
+                </div>
+            </div>
+
+            <!-- Indicator Skor & Mod -->
+            <div class="flex items-center space-x-3 bg-sky-50 px-4 py-2 rounded-xl border border-sky-200">
+                <div class="text-xs text-right">
+                    <span class="block text-slate-500 font-medium">Bintang Pengumpul</span>
+                    <span id="starCount" class="font-bold text-amber-500 text-base">⭐ 0 / 50</span>
+                </div>
+                <button onclick="playAudio('click'); showModalObjektif();" class="text-xs bg-sky-600 hover:bg-sky-700 text-white font-semibold px-3 py-1.5 rounded-lg transition">
+                    <i class="fa-solid fa-bullseye mr-1"></i> Objektif
+                </button>
+            </div>
+        </div>
+
+        <!-- Menu Tab Navigation -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 overflow-x-auto pb-2 pt-1">
+            <div class="flex space-x-2 min-w-max">
+                <button onclick="switchTab('komponen')" id="tab-komponen" class="tab-btn active px-4 py-2 rounded-xl font-semibold text-sm transition flex items-center gap-2">
+                    <i class="fa-solid fa-cubes"></i> 1. Komponen Utama
+                </button>
+                <button onclick="switchTab('makmal')" id="tab-makmal" class="tab-btn px-4 py-2 rounded-xl font-semibold text-sm transition text-slate-600 hover:bg-sky-50 flex items-center gap-2">
+                    <i class="fa-solid fa-flask text-amber-500"></i> 2. Makmal Litar (Bersiri & Selari)
+                </button>
+                <button onclick="switchTab('tenaga')" id="tab-tenaga" class="tab-btn px-4 py-2 rounded-xl font-semibold text-sm transition text-slate-600 hover:bg-sky-50 flex items-center gap-2">
+                    <i class="fa-solid fa-fire-flame-curved text-red-500"></i> 3. Perubahan Tenaga
+                </button>
+                <button onclick="switchTab('banding')" id="tab-banding" class="tab-btn px-4 py-2 rounded-xl font-semibold text-sm transition text-slate-600 hover:bg-sky-50 flex items-center gap-2">
+                    <i class="fa-solid fa-code-compare text-purple-500"></i> 4. Banding Beza
+                </button>
+                <button onclick="switchTab('kuiz')" id="tab-kuiz" class="tab-btn px-4 py-2 rounded-xl font-semibold text-sm transition text-slate-600 hover:bg-sky-50 flex items-center gap-2">
+                    <i class="fa-solid fa-gamepad text-green-500"></i> 5. Cabaran & Kuiz
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Kandungan Utama (Dynamic Tabs) -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full">
+
+        <!-- TAB 1: KOMPONEN UTAMA -->
+        <section id="sec-komponen" class="space-y-6">
+            <div class="bg-white/80 backdrop-blur rounded-2xl p-6 border border-sky-100 shadow-sm">
+                <div class="max-w-3xl">
+                    <span class="inline-block px-3 py-1 bg-sky-100 text-sky-700 font-bold text-xs rounded-full uppercase tracking-wider mb-2">
+                        Objektif 1
+                    </span>
+                    <h2 class="font-display text-2xl sm:text-3xl font-bold text-slate-900">
+                        4 Komponen Utama Litar Elektrik Lengkap
+                    </h2>
+                    <p class="text-slate-600 mt-2 text-sm sm:text-base">
+                        Sebuah litar elektrik yang lengkap memerlukan empat komponen penting supaya arus elektrik dapat mengalir dan mentol menyala. Tekan pada setiap komponen di bawah untuk meneroka fungsi dan perannya!
+                    </p>
+                </div>
+            </div>
+
+            <!-- Grid 4 Komponen Utama -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Komponen 1: Sel Kering -->
+                <div onclick="selectComponent('sel_kering')" class="bg-white hover:border-amber-400 border-2 border-slate-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition cursor-pointer group flex flex-col justify-between">
+                    <div>
+                        <div class="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 text-3xl mb-4 group-hover:scale-110 transition duration-300">
+                            🔋
+                        </div>
+                        <h3 class="font-display text-xl font-bold text-slate-900 group-hover:text-amber-600 transition">
+                            Sel Kering
+                        </h3>
+                        <p class="text-xs text-amber-700 font-semibold mt-1">
+                            Sumber Tenaga Elektrik
+                        </p>
+                        <p class="text-slate-600 text-sm mt-3 leading-relaxed">
+                            Membekalkan tenaga elektrik kepada litar. Mengandungi <strong>tenaga kimia</strong> yang bertukar menjadi tenaga elektrik.
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-amber-600">
+                        <span>Lihat Simbol & Fungsi</span>
+                        <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition"></i>
+                    </div>
+                </div>
+
+                <!-- Komponen 2: Wayar Penyambung -->
+                <div onclick="selectComponent('wayar')" class="bg-white hover:border-sky-400 border-2 border-slate-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition cursor-pointer group flex flex-col justify-between">
+                    <div>
+                        <div class="w-16 h-16 bg-sky-100 rounded-2xl flex items-center justify-center text-sky-600 text-3xl mb-4 group-hover:scale-110 transition duration-300">
+                            🔌
+                        </div>
+                        <h3 class="font-display text-xl font-bold text-slate-900 group-hover:text-sky-600 transition">
+                            Wayar Penyambung
+                        </h3>
+                        <p class="text-xs text-sky-700 font-semibold mt-1">
+                            Laluan Arus Elektrik
+                        </p>
+                        <p class="text-slate-600 text-sm mt-3 leading-relaxed">
+                            Menyambungkan komponen-komponen elektrik untuk membolehkan <strong>arus elektrik mengalir</strong> dalam laluan tertutup.
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-sky-600">
+                        <span>Lihat Simbol & Fungsi</span>
+                        <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition"></i>
+                    </div>
+                </div>
+
+                <!-- Komponen 3: Mentol -->
+                <div onclick="selectComponent('mentol')" class="bg-white hover:border-yellow-400 border-2 border-slate-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition cursor-pointer group flex flex-col justify-between">
+                    <div>
+                        <div class="w-16 h-16 bg-yellow-100 rounded-2xl flex items-center justify-center text-yellow-600 text-3xl mb-4 group-hover:scale-110 transition duration-300">
+                            💡
+                        </div>
+                        <h3 class="font-display text-xl font-bold text-slate-900 group-hover:text-yellow-600 transition">
+                            Mentol
+                        </h3>
+                        <p class="text-xs text-yellow-700 font-semibold mt-1">
+                            Pengeluaran Cahaya & Haba
+                        </p>
+                        <p class="text-slate-600 text-sm mt-3 leading-relaxed">
+                            Menukarkan tenaga elektrik kepada <strong>tenaga cahaya</strong> dan <strong>tenaga haba</strong> apabila litar melengkapkan laluan.
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-yellow-600">
+                        <span>Lihat Simbol & Fungsi</span>
+                        <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition"></i>
+                    </div>
+                </div>
+
+                <!-- Komponen 4: Suis -->
+                <div onclick="selectComponent('suis')" class="bg-white hover:border-red-400 border-2 border-slate-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition cursor-pointer group flex flex-col justify-between">
+                    <div>
+                        <div class="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center text-red-600 text-3xl mb-4 group-hover:scale-110 transition duration-300">
+                            🎛️
+                        </div>
+                        <h3 class="font-display text-xl font-bold text-slate-900 group-hover:text-red-600 transition">
+                            Suis
+                        </h3>
+                        <p class="text-xs text-red-700 font-semibold mt-1">
+                            Kawalan Litar
+                        </p>
+                        <p class="text-slate-600 text-sm mt-3 leading-relaxed">
+                            <strong>Menyambung</strong> (suis ditutup) atau <strong>memutuskan</strong> (suis dibuka) aliran arus elektrik dalam litar.
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-red-600">
+                        <span>Lihat Simbol & Fungsi</span>
+                        <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Detail Komponen yang Dipilih -->
+            <div id="componentDetailPanel" class="bg-white rounded-2xl p-6 border border-sky-100 shadow-md">
+                <div class="flex flex-col md:flex-row items-center gap-6">
+                    <div id="compDetailImage" class="w-32 h-32 bg-sky-50 rounded-2xl flex items-center justify-center text-6xl shadow-inner flex-shrink-0">
+                        🔋
+                    </div>
+                    <div class="space-y-2 text-center md:text-left flex-grow">
+                        <span id="compDetailBadge" class="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full">
+                            Penerangan Komponen
+                        </span>
+                        <h3 id="compDetailTitle" class="font-display text-2xl font-bold text-slate-900">
+                            Sel Kering (Bateri)
+                        </h3>
+                        <p id="compDetailDesc" class="text-slate-600 text-sm leading-relaxed">
+                            Sel kering mempunyai dua punca iaitu punca positif (+) dan punca negatif (-). Kimia di dalam bateri bertukar menjadi tenaga elektrik untuk membekalkan kuasa.
+                        </p>
+                        <div class="pt-2 flex flex-wrap gap-2 justify-center md:justify-start">
+                            <span id="compDetailTag1" class="text-xs bg-slate-100 font-semibold px-2.5 py-1 rounded-md text-slate-700">
+                                Simbol Diagram: 🔲
+                            </span>
+                            <span id="compDetailTag2" class="text-xs bg-slate-100 font-semibold px-2.5 py-1 rounded-md text-slate-700">
+                                Jenis Tenaga: Tenaga Kimia
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: MAKMAL LITAR INTERAKTIF -->
+        <section id="sec-makmal" class="hidden space-y-6">
+            <div class="bg-white/80 backdrop-blur rounded-2xl p-6 border border-sky-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <span class="inline-block px-3 py-1 bg-amber-100 text-amber-800 font-bold text-xs rounded-full uppercase tracking-wider mb-1">
+                        Objektif 2: Eksperimen Maya
+                    </span>
+                    <h2 class="font-display text-2xl sm:text-3xl font-bold text-slate-900">
+                        Makmal Litar: Bersiri & Selari
+                    </h2>
+                    <p class="text-slate-600 text-sm mt-1">
+                        Bina litar, ubah susunan mentol & sel kering, dan buka/tutup suis untuk melihat kesannya!
+                    </p>
+                </div>
+
+                <!-- Mod Switcher -->
+                <div class="flex items-center bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+                    <button id="btnModeBersiri" onclick="setCircuitType('bersiri')" class="px-4 py-2 rounded-lg text-xs font-bold transition bg-sky-600 text-white shadow">
+                        Litar Bersiri
+                    </button>
+                    <button id="btnModeSelari" onclick="setCircuitType('selari')" class="px-4 py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-slate-900">
+                        Litar Selari
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Panel Kawalan Litar -->
+                <div class="bg-white rounded-2xl p-6 border border-sky-100 shadow-sm space-y-5">
+                    <h3 class="font-display text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-sky-600"></i> Kawalan Litar
+                    </h3>
+
+                    <!-- Suis Utama ON/OFF -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+                        <div>
+                            <span class="font-bold text-sm block text-slate-800">Keadaan Suis</span>
+                            <span id="switchStatusText" class="text-xs font-semibold text-red-500">TERBUKA (Litar Terputus)</span>
+                        </div>
+                        <button id="btnToggleSwitch" onclick="toggleSwitch()" class="px-5 py-2.5 rounded-xl font-bold text-sm transition bg-red-500 hover:bg-red-600 text-white shadow-md flex items-center gap-2">
+                            <i id="switchIcon" class="fa-solid fa-power-off"></i> <span id="switchBtnLabel">TUTUP SUIS</span>
+                        </button>
+                    </div>
+
+                    <!-- Bilangan Mentol -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="font-bold text-sm text-slate-800">Bilangan Mentol:</label>
+                            <span id="bulbCountLabel" class="font-bold text-sky-600 bg-sky-50 px-2.5 py-1 rounded-md border border-sky-200 text-xs">2 Mentol</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="setBulbCount(1)" class="flex-1 py-2 bg-slate-100 hover:bg-sky-100 font-bold rounded-lg text-xs border border-slate-200 text-slate-700">1 Mentol</button>
+                            <button onclick="setBulbCount(2)" class="flex-1 py-2 bg-sky-600 font-bold rounded-lg text-xs border border-sky-600 text-white">2 Mentol</button>
+                            <button onclick="setBulbCount(3)" class="flex-1 py-2 bg-slate-100 hover:bg-sky-100 font-bold rounded-lg text-xs border border-slate-200 text-slate-700">3 Mentol</button>
+                        </div>
+                    </div>
+
+                    <!-- Bilangan Sel Kering -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="font-bold text-sm text-slate-800">Bilangan Sel Kering:</label>
+                            <span id="batteryCountLabel" class="font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200 text-xs">1 Sel Kering</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="setBatteryCount(1)" class="flex-1 py-2 bg-amber-500 font-bold rounded-lg text-xs text-white shadow">1 Sel (1.5V)</button>
+                            <button onclick="setBatteryCount(2)" class="flex-1 py-2 bg-slate-100 hover:bg-amber-100 font-bold rounded-lg text-xs border border-slate-200 text-slate-700">2 Sel (3.0V)</button>
+                        </div>
+                    </div>
+
+                    <!-- Simulasi Mentol Terbakar / Rosak -->
+                    <div class="pt-2 border-t border-slate-100 space-y-2">
+                        <label class="font-bold text-sm text-slate-800 block">Ujian Mentol Rosak / Tanggal:</label>
+                        <button id="btnBreakBulb" onclick="toggleBreakBulb()" class="w-full py-2.5 px-4 bg-orange-50 hover:bg-orange-100 text-orange-700 font-bold rounded-xl text-xs border border-orange-200 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-burst"></i> <span id="breakBulbText">Tanggalkan 1 Mentol (Simulasi Rosak)</span>
+                        </button>
+                    </div>
+
+                    <!-- Status Kecerahan Mentol -->
+                    <div class="bg-amber-50/80 p-4 rounded-xl border border-amber-200">
+                        <span class="text-xs font-bold text-amber-900 block mb-1">Status Kecerahan Mentol:</span>
+                        <div class="flex items-center gap-3">
+                            <div id="brightnessBar" class="h-3 bg-amber-400 rounded-full transition-all duration-500 w-0"></div>
+                            <span id="brightnessText" class="text-xs font-bold text-amber-800 whitespace-nowrap">Padam</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Canvas Visualiser Litar -->
+                <div class="lg:col-span-2 bg-slate-900 rounded-2xl p-4 sm:p-6 shadow-xl border border-slate-800 flex flex-col justify-between min-h-[420px] relative overflow-hidden">
+                    <!-- Overlay Info Header Canvas -->
+                    <div class="flex justify-between items-center z-10 bg-slate-800/80 backdrop-blur px-4 py-2 rounded-xl border border-slate-700 text-white">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></span>
+                            <span id="canvasTypeTitle" class="font-display font-bold text-sm">Litar Bersiri Maya</span>
+                        </div>
+                        <span id="canvasFlowStatus" class="text-xs bg-slate-700 px-3 py-1 rounded-md text-amber-300 font-mono">
+                            ⚡ Arus: 0.0 A
+                        </span>
+                    </div>
+
+                    <!-- Visual SVG Canvas Simulator -->
+                    <div class="w-full my-auto flex items-center justify-center py-4 relative" id="svgContainer">
+                        <svg id="circuitSVG" viewBox="0 0 600 350" class="w-full h-auto max-h-[320px]">
+                            <!-- SVG Content dynamically updated by JavaScript -->
+                        </svg>
+                    </div>
+
+                    <!-- Visual Energy Indicator Bar -->
+                    <div class="z-10 bg-slate-800/90 rounded-xl p-3 border border-slate-700 text-white text-xs flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="font-semibold text-slate-300">Laluan Arus:</span>
+                            <span id="pathwayDesc" class="text-sky-300 font-bold">1 Laluan Sahaja (Bersiri)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-semibold text-slate-300">Status Litar:</span>
+                            <span id="circuitStatusBadge" class="bg-red-900/80 text-red-200 px-2.5 py-0.5 rounded font-bold">Litar Tidak Lengkap</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: PERUBAHAN BENTUK TENAGA -->
+        <section id="sec-tenaga" class="hidden space-y-6">
+            <div class="bg-white/80 backdrop-blur rounded-2xl p-6 border border-sky-100 shadow-sm">
+                <span class="inline-block px-3 py-1 bg-red-100 text-red-700 font-bold text-xs rounded-full uppercase tracking-wider mb-2">
+                    Objektif 3
+                </span>
+                <h2 class="font-display text-2xl sm:text-3xl font-bold text-slate-900">
+                    Perubahan Bentuk Tenaga dalam Litar Elektrik
+                </h2>
+                <p class="text-slate-600 text-sm sm:text-base mt-1">
+                    Apabila suis ditutup dan litar elektrik menjadi lengkap, tenaga tidak dicipta atau dimusnahkan, tetapi <strong>bertukar dari satu bentuk ke bentuk yang lain</strong>.
+                </p>
+            </div>
+
+            <!-- Visual Flow Transfirmasi Tenaga -->
+            <div class="bg-white rounded-2xl p-6 sm:p-8 border border-sky-100 shadow-md">
+                <div class="text-center max-w-2xl mx-auto mb-8">
+                    <h3 class="font-display text-xl font-bold text-slate-900">
+                        Urutan Perubahan Tenaga (Lampu Menyala)
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-1">Tekan kad di bawah untuk melihat animasi & penjelasan lanjut!</p>
+                </div>
+
+                <!-- Carta Alir Interaktif -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 relative">
+                    <!-- Step 1: Tenaga Kimia -->
+                    <div onclick="showEnergyDetail('kimia')" class="bg-amber-50 hover:bg-amber-100 border-2 border-amber-200 rounded-2xl p-6 text-center cursor-pointer transition transform hover:-translate-y-1 shadow-sm">
+                        <div class="w-16 h-16 bg-amber-400 text-slate-900 rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-3 shadow">
+                            🧪
+                        </div>
+                        <span class="text-xs font-bold text-amber-700 uppercase tracking-wide">Peringkat 1</span>
+                        <h4 class="font-display text-xl font-bold text-slate-900 mt-1">Tenaga Kimia</h4>
+                        <p class="text-xs text-slate-600 mt-2">Tersimpan di dalam **Sel Kering** (Bateri)</p>
+                    </div>
+
+                    <!-- Arrow 1 -->
+                    <div class="hidden md:flex items-center justify-center text-sky-400 text-2xl font-bold">
+                        <i class="fa-solid fa-chevron-right animate-pulse"></i>
+                    </div>
+
+                    <!-- Step 2: Tenaga Elektrik -->
+                    <div onclick="showEnergyDetail('elektrik')" class="bg-sky-50 hover:bg-sky-100 border-2 border-sky-200 rounded-2xl p-6 text-center cursor-pointer transition transform hover:-translate-y-1 shadow-sm">
+                        <div class="w-16 h-16 bg-sky-500 text-white rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-3 shadow">
+                            ⚡
+                        </div>
+                        <span class="text-xs font-bold text-sky-700 uppercase tracking-wide">Peringkat 2</span>
+                        <h4 class="font-display text-xl font-bold text-slate-900 mt-1">Tenaga Elektrik</h4>
+                        <p class="text-xs text-slate-600 mt-2">Mengalir melalui **Wayar Penyambung**</p>
+                    </div>
+
+                    <!-- Arrow 2 -->
+                    <div class="hidden md:flex items-center justify-center text-sky-400 text-2xl font-bold">
+                        <i class="fa-solid fa-chevron-right animate-pulse"></i>
+                    </div>
+
+                    <!-- Step 3: Tenaga Cahaya + Haba -->
+                    <div onclick="showEnergyDetail('cahaya_haba')" class="bg-yellow-50 hover:bg-yellow-100 border-2 border-yellow-200 rounded-2xl p-6 text-center cursor-pointer transition transform hover:-translate-y-1 shadow-sm md:col-span-1">
+                        <div class="w-16 h-16 bg-yellow-400 text-slate-900 rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-3 shadow glow-yellow">
+                            💡
+                        </div>
+                        <span class="text-xs font-bold text-yellow-800 uppercase tracking-wide">Peringkat Akhir</span>
+                        <h4 class="font-display text-lg font-bold text-slate-900 mt-1">Tenaga Cahaya + Tenaga Haba</h4>
+                        <p class="text-xs text-slate-600 mt-2">Dihasilkan oleh **Mentol** yang menyala & panas</p>
+                    </div>
+                </div>
+
+                <!-- Formulasi Ringkasan -->
+                <div class="mt-8 bg-slate-900 text-white p-6 rounded-2xl border border-slate-800 text-center space-y-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Persamaan Rumusan Tenaga</span>
+                    <div class="font-display text-lg sm:text-2xl font-bold text-sky-200 flex flex-wrap items-center justify-center gap-2">
+                        <span>Tenaga Kimia</span>
+                        <span class="text-amber-400">➔</span>
+                        <span>Tenaga Elektrik</span>
+                        <span class="text-amber-400">➔</span>
+                        <span class="text-yellow-300">Tenaga Cahaya + Tenaga Haba</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Penerangan Animasi Tenaga -->
+            <div id="energyDetailCard" class="bg-white rounded-2xl p-6 border border-sky-100 shadow-md">
+                <div class="flex items-start gap-4">
+                    <div id="energyIcon" class="w-14 h-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0">
+                        🧪
+                    </div>
+                    <div>
+                        <h4 id="energyTitle" class="font-display text-xl font-bold text-slate-900">
+                            Tenaga Kimia (Bateri)
+                        </h4>
+                        <p id="energyDesc" class="text-slate-600 text-sm mt-1 leading-relaxed">
+                            Di dalam sel kering, tindak balas bahan kimia membebaskan cas-cas elektrik. Selagi sel kering belum kehabisan bahan kimia, ia dapat membekalkan tenaga elektrik secara berterusan apabila litar disambungkan.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: BANDING BEZA LITAR (BERSIRI VS SELARI) -->
+        <section id="sec-banding" class="hidden space-y-6">
+            <div class="bg-white/80 backdrop-blur rounded-2xl p-6 border border-sky-100 shadow-sm">
+                <span class="inline-block px-3 py-1 bg-purple-100 text-purple-700 font-bold text-xs rounded-full uppercase tracking-wider mb-2">
+                    Perbandingan Utama
+                </span>
+                <h2 class="font-display text-2xl sm:text-3xl font-bold text-slate-900">
+                    Perbezaan Litar Bersiri vs Litar Selari
+                </h2>
+                <p class="text-slate-600 text-sm mt-1">
+                    Fahami cara susunan mentol mempengaruhi kecerahan mentol dan laluan arus elektrik.
+                </p>
+            </div>
+
+            <!-- Jadual Perbandingan Interaktif -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Kad Litar Bersiri -->
+                <div class="bg-white rounded-2xl p-6 border-2 border-sky-200 shadow-md space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="font-display text-xl font-bold text-sky-700">Litar Bersiri</h3>
+                        <span class="bg-sky-100 text-sky-800 text-xs font-bold px-2.5 py-1 rounded-full">1 Laluan Arus</span>
+                    </div>
+
+                    <!-- Lakaran SVG Ringkas Bersiri -->
+                    <div class="bg-slate-900 rounded-xl p-4 text-center">
+                        <svg viewBox="0 0 300 150" class="w-full h-28 mx-auto">
+                            <!-- Battery -->
+                            <rect x="130" y="10" width="40" height="20" rx="3" fill="#f59e0b" />
+                            <text x="150" y="24" fill="#000" font-size="10" font-weight="bold" text-anchor="middle">1.5V</text>
+                            <!-- Wire Loop -->
+                            <path d="M 40 20 L 130 20 M 170 20 L 260 20 L 260 130 L 40 130 Z" fill="none" stroke="#38bdf8" stroke-width="3"/>
+                            <!-- Bulbs in series -->
+                            <circle cx="100" cy="130" r="12" fill="#fef08a" stroke="#f59e0b" stroke-width="2"/>
+                            <circle cx="200" cy="130" r="12" fill="#fef08a" stroke="#f59e0b" stroke-width="2"/>
+                        </svg>
+                    </div>
+
+                    <ul class="space-y-3 text-sm text-slate-700">
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-circle-dot text-sky-500 mt-1"></i>
+                            <span><strong>Laluan Arus:</strong> Arus mengalir melalui <u>satu laluan sahaja</u>.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-circle-dot text-sky-500 mt-1"></i>
+                            <span><strong>Kecerahan Mentol:</strong> Mentol menjadi <u>lebih malap</u> apabila bilangan mentol ditambah.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-circle-dot text-sky-500 mt-1"></i>
+                            <span><strong>Kesan Mentol Rosak:</strong> Jika 1 mentol rosak/ditanggalkan, mentol lain <u>TIDAK menyala</u> (litar terputus).</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Kad Litar Selari -->
+                <div class="bg-white rounded-2xl p-6 border-2 border-purple-200 shadow-md space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="font-display text-xl font-bold text-purple-700">Litar Selari</h3>
+                        <span class="bg-purple-100 text-purple-800 text-xs font-bold px-2.5 py-1 rounded-full">Lebih dari 1 Laluan</span>
+                    </div>
+
+                    <!-- Lakaran SVG Ringkas Selari -->
+                    <div class="bg-slate-900 rounded-xl p-4 text-center">
+                        <svg viewBox="0 0 300 150" class="w-full h-28 mx-auto">
+                            <!-- Battery -->
+                            <rect x="130" y="10" width="40" height="20" rx="3" fill="#f59e0b" />
+                            <!-- Outer wire loop -->
+                            <path d="M 40 20 L 130 20 M 170 20 L 260 20 L 260 130 L 40 130 Z" fill="none" stroke="#c084fc" stroke-width="3"/>
+                            <!-- Branch 1 bulb -->
+                            <circle cx="150" cy="75" r="12" fill="#fef08a" stroke="#f59e0b" stroke-width="2"/>
+                            <path d="M 40 75 L 138 75 M 162 75 L 260 75" fill="none" stroke="#c084fc" stroke-width="3"/>
+                            <!-- Branch 2 bulb -->
+                            <circle cx="150" cy="130" r="12" fill="#fef08a" stroke="#f59e0b" stroke-width="2"/>
+                        </svg>
+                    </div>
+
+                    <ul class="space-y-3 text-sm text-slate-700">
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-circle-dot text-purple-500 mt-1"></i>
+                            <span><strong>Laluan Arus:</strong> Arus mengalir melalui <u>beberapa laluan bercabang</u>.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-circle-dot text-purple-500 mt-1"></i>
+                            <span><strong>Kecerahan Mentol:</strong> Kecerahan mentol <u>kekal terang</u> walaupun bilangan mentol ditambah.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-circle-dot text-purple-500 mt-1"></i>
+                            <span><strong>Kesan Mentol Rosak:</strong> Jika 1 mentol rosak, mentol di laluan lain <u>TETAP menyala</u>.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Interaktif Soalan Cabaran Cepat -->
+            <div class="bg-gradient-to-r from-purple-900 to-indigo-900 text-white rounded-2xl p-6 shadow-xl space-y-4">
+                <h3 class="font-display text-lg font-bold flex items-center gap-2 text-yellow-300">
+                    <i class="fa-solid fa-brain"></i> Cabaran Minda Ringkas: Suasana Di Rumah
+                </h3>
+                <p class="text-sm text-slate-200">
+                    Mengapakah lampu-lampu di rumah kita dipasang dalam <strong>Litar Selari</strong> dan bukannya Litar Bersiri?
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                    <button onclick="checkMiniQuiz(false)" class="p-3 bg-white/10 hover:bg-white/20 rounded-xl text-left text-xs sm:text-sm border border-white/20 transition">
+                        A. Kerana litar selari menggunakan lebih sedikit wayar.
+                    </button>
+                    <button onclick="checkMiniQuiz(true)" class="p-3 bg-white/10 hover:bg-white/20 rounded-xl text-left text-xs sm:text-sm border border-white/20 transition">
+                        B. Supaya jika satu lampu rosak, lampu lain di bilik berbeza tetap menyala.
+                    </button>
+                </div>
+                <div id="miniQuizFeedback" class="hidden text-xs p-3 rounded-lg font-bold"></div>
+            </div>
+        </section>
+
+        <!-- TAB 5: CABARAN & KUIZ INTERAKTIF -->
+        <section id="sec-kuiz" class="hidden space-y-6">
+            <div class="bg-white/80 backdrop-blur rounded-2xl p-6 border border-sky-100 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <span class="inline-block px-3 py-1 bg-green-100 text-green-700 font-bold text-xs rounded-full uppercase tracking-wider mb-2">
+                        Ujian Kefahaman
+                    </span>
+                    <h2 class="font-display text-2xl sm:text-3xl font-bold text-slate-900">
+                        Cabaran & Kuiz Sains Tahun 5
+                    </h2>
+                    <p class="text-slate-600 text-sm mt-1">
+                        Jawab 5 soalan ini untuk menguji kepakaran anda dan kumpul mata Bintang!
+                    </p>
+                </div>
+                <button onclick="restartQuiz()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition flex items-center gap-2">
+                    <i class="fa-solid fa-rotate-right"></i> Mula Semula Kuiz
+                </button>
+            </div>
+
+            <!-- Kad Soalan Kuiz -->
+            <div id="quizContainer" class="bg-white rounded-2xl p-6 sm:p-8 border border-sky-100 shadow-md space-y-6">
+                <!-- Header Soalan -->
+                <div class="flex justify-between items-center border-b border-slate-100 pb-4">
+                    <span id="quizProgress" class="font-display font-bold text-sm text-sky-600">Soalan 1 daripada 5</span>
+                    <span id="quizScoreText" class="text-xs font-bold bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-200">
+                        Skor: 0
+                    </span>
+                </div>
+
+                <!-- Teks Soalan -->
+                <h3 id="quizQuestionText" class="font-display text-lg sm:text-xl font-bold text-slate-900 leading-snug">
+                    Memuatkan soalan...
+                </h3>
+
+                <!-- Pilihan Jawapan -->
+                <div id="quizOptionsContainer" class="grid grid-cols-1 gap-3">
+                    <!-- Buttons generated via JS -->
+                </div>
+
+                <!-- Panel Maklum Balas Jawapan -->
+                <div id="quizFeedbackPanel" class="hidden p-4 rounded-xl text-sm font-semibold border space-y-2">
+                    <div id="quizFeedbackTitle" class="font-bold flex items-center gap-2"></div>
+                    <p id="quizFeedbackDesc" class="text-slate-700 font-normal text-xs sm:text-sm"></p>
+                    <button id="btnNextQuestion" onclick="nextQuestion()" class="mt-2 px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs transition">
+                        Soalan Seterusnya ➔
+                    </button>
+                </div>
+            </div>
+
+            <!-- Keputusan Akhir Kuiz (Hidden by Default) -->
+            <div id="quizResultPanel" class="hidden bg-white rounded-2xl p-8 border border-sky-100 shadow-lg text-center space-y-6">
+                <div class="w-24 h-24 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center text-5xl mx-auto shadow-inner">
+                    🏆
+                </div>
+                <div>
+                    <h3 class="font-display text-2xl sm:text-3xl font-bold text-slate-900">Tahniah! Kuiz Selesai!</h3>
+                    <p class="text-slate-600 text-sm mt-1">Anda telah melengkapkan modul Sains Tahun 5: Elektrik & Tenaga.</p>
+                </div>
+
+                <div class="bg-sky-50 p-6 rounded-2xl max-w-md mx-auto border border-sky-200">
+                    <span class="text-xs font-bold text-sky-700 uppercase">Skor Akhir Anda</span>
+                    <div id="finalScoreDisplay" class="text-4xl font-display font-extrabold text-sky-900 my-2">50 / 50</div>
+                    <p id="finalFeedbackMessage" class="text-xs text-sky-800 font-medium">Cemerlang! Anda menguasai semua objektif pembelajaran.</p>
+                </div>
+
+                <div class="flex justify-center gap-3">
+                    <button onclick="restartQuiz()" class="px-6 py-3 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl text-sm shadow transition">
+                        <i class="fa-solid fa-arrow-rotate-left mr-2"></i> Cuba Lagi
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-sky-100 py-4 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500 font-medium">
+            Simulator Pembelajaran Interaktif Sains Sekolah Rendah (Tahun 5) &bull; KSSR Semakan
+        </div>
+    </footer>
+
+    <!-- Modal Objektif Pembelajaran -->
+    <div id="modalObjektif" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-display text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-bullseye text-sky-600"></i> Objektif Pembelajaran
+                </h3>
+                <button onclick="closeModalObjektif()" class="text-slate-400 hover:text-slate-600 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="space-y-3 text-xs sm:text-sm text-slate-700">
+                <p>Di akhir simulator ini, murid Sekolah Rendah Darjah 5 dapat:</p>
+                <ol class="list-decimal pl-5 space-y-2 font-medium">
+                    <li>Mengenal pasti <strong>4 komponen utama</strong> litar elektrik lengkap (sel kering, wayar penyambung, mentol, dan suis).</li>
+                    <li>Menerangkan susunan langkah melengkapkan <strong>Litar Bersiri</strong> dan <strong>Litar Selari</strong>.</li>
+                    <li>Menyatakan <strong>perubahan bentuk tenaga</strong> yang berlaku apabila lampu menyala (Tenaga Kimia $\rightarrow$ Tenaga Elektrik $\rightarrow$ Tenaga Cahaya + Tenaga Haba).</li>
+                </ol>
+            </div>
+            <button onclick="closeModalObjektif()" class="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl text-xs transition">
+                Faham & Mula Belajar
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // Global State
+        let currentTab = 'komponen';
+        let starPoints = 0;
+
+        // Circuit Simulator State
+        let circuitState = {
+            type: 'bersiri', // 'bersiri' or 'selari'
+            switchClosed: false,
+            bulbCount: 2,
+            batteryCount: 1,
+            isBroken: false
+        };
+
+        // Web Audio API for interactive sounds
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function playAudio(type) {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new AudioContext();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'switch') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.setValueAtTime(440, now + 0.05);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.setValueAtTime(140, now + 0.12);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                }
+            } catch (e) {
+                console.log("Audio not supported or blocked");
+            }
+        }
+
+        // Navigation Switcher
+        function switchTab(tabName) {
+            playAudio('click');
+            currentTab = tabName;
+
+            ['komponen', 'makmal', 'tenaga', 'banding', 'kuiz'].forEach(t => {
+                const sec = document.getElementById('sec-' + t);
+                const btn = document.getElementById('tab-' + t);
+                if (t === tabName) {
+                    sec.classList.remove('hidden');
+                    btn.classList.add('active');
+                    btn.classList.remove('text-slate-600');
+                } else {
+                    sec.classList.add('hidden');
+                    btn.classList.remove('active');
+                    btn.classList.add('text-slate-600');
+                }
+            });
+
+            if (tabName === 'makmal') {
+                renderCircuitSVG();
+            }
+        }
+
+        // Modal Handler
+        function showModalObjektif() {
+            document.getElementById('modalObjektif').classList.remove('hidden');
+        }
+        function closeModalObjektif() {
+            playAudio('click');
+            document.getElementById('modalObjektif').classList.add('hidden');
+        }
+
+        // Data 4 Komponen
+        const componentData = {
+            sel_kering: {
+                title: "Sel Kering (Bateri)",
+                badge: "Sumber Tenaga Elektrik",
+                desc: "Mengandungi bahan kimia yang menghasilkan tenaga elektrik apabila litar disambung. Mempunyai terminal Positif (+) dan Negatif (-).",
+                icon: "🔋",
+                tag1: "Simbol: 🔲 (+/-)",
+                tag2: "Tenaga: Tenaga Kimia ➔ Tenaga Elektrik"
+            },
+            wayar: {
+                title: "Wayar Penyambung",
+                badge: "Pengalir Arus Elektrik",
+                desc: "Dibuat daripada kuprum (konduktor elektrik) yang dibalut plastik insulator. Berfungsi mengalirkan cas elektrik di antara komponen.",
+                icon: "🔌",
+                tag1: "Simbol: ─── (Garis Lurus)",
+                tag2: "Ciri: Konduktor Elektrik"
+            },
+            mentol: {
+                title: "Mentol Elektrik",
+                badge: "Penukar Tenaga Cahaya & Haba",
+                desc: "Mengandungi filamen nipis (tungsten) yang menjadi sangat panas dan memancarkan cahaya terang apabila arus elektrik mengalir daripadanya.",
+                icon: "💡",
+                tag1: "Simbol: ⊗ (Bulatan Berpangkah)",
+                tag2: "Tenaga: Tenaga Elektrik ➔ Cahaya + Haba"
+            },
+            suis: {
+                title: "Suis Elektrik",
+                badge: "Pengawal Litar",
+                desc: "Memutuskan litar (Suis Terbuka - Lampu Padam) atau melengkapkan litar (Suis Ditutup - Lampu Menyala).",
+                icon: "🎛️",
+                tag1: "Simbol: ──/ ── (Buka/Tutup)",
+                tag2: "Fungsi: Sambung / Putus Arus"
+            }
+        };
+
+        function selectComponent(key) {
+            playAudio('click');
+            const data = componentData[key];
+            if (!data) return;
+
+            document.getElementById('compDetailImage').textContent = data.icon;
+            document.getElementById('compDetailTitle').textContent = data.title;
+            document.getElementById('compDetailDesc').textContent = data.desc;
+            document.getElementById('compDetailBadge').textContent = data.badge;
+            document.getElementById('compDetailTag1').textContent = data.tag1;
+            document.getElementById('compDetailTag2').textContent = data.tag2;
+
+            // Scroll gently to detail panel
+            document.getElementById('componentDetailPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Circuit Controls & Calculations
+        function setCircuitType(type) {
+            playAudio('click');
+            circuitState.type = type;
+            const btnB = document.getElementById('btnModeBersiri');
+            const btnS = document.getElementById('btnModeSelari');
+
+            if (type === 'bersiri') {
+                btnB.className = "px-4 py-2 rounded-lg text-xs font-bold transition bg-sky-600 text-white shadow";
+                btnS.className = "px-4 py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-slate-900";
+                document.getElementById('canvasTypeTitle').textContent = "Litar Bersiri Maya";
+                document.getElementById('pathwayDesc').textContent = "1 Laluan Sahaja (Bersiri)";
+            } else {
+                btnS.className = "px-4 py-2 rounded-lg text-xs font-bold transition bg-purple-600 text-white shadow";
+                btnB.className = "px-4 py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-slate-900";
+                document.getElementById('canvasTypeTitle').textContent = "Litar Selari Maya";
+                document.getElementById('pathwayDesc').textContent = "Laluan Bercabang (Selari)";
+            }
+            renderCircuitSVG();
+        }
+
+        function toggleSwitch() {
+            playAudio('switch');
+            circuitState.switchClosed = !circuitState.switchClosed;
+            renderCircuitSVG();
+        }
+
+        function setBulbCount(count) {
+            playAudio('click');
+            circuitState.bulbCount = count;
+            document.getElementById('bulbCountLabel').textContent = count + " Mentol";
+            renderCircuitSVG();
+        }
+
+        function setBatteryCount(count) {
+            playAudio('click');
+            circuitState.batteryCount = count;
+            document.getElementById('batteryCountLabel').textContent = count + " Sel Kering";
+            renderCircuitSVG();
+        }
+
+        function toggleBreakBulb() {
+            playAudio('click');
+            circuitState.isBroken = !circuitState.isBroken;
+            const btnText = document.getElementById('breakBulbText');
+            if (circuitState.isBroken) {
+                btnText.textContent = "Pasang Semula Mentol (Normal)";
+            } else {
+                btnText.textContent = "Tanggalkan 1 Mentol (Simulasi Rosak)";
+            }
+            renderCircuitSVG();
+        }
+
+        // Render Circuit SVG Canvas dynamically
+        function renderCircuitSVG() {
+            const svg = document.getElementById('circuitSVG');
+            const { type, switchClosed, bulbCount, batteryCount, isBroken } = circuitState;
+
+            // Determine if bulbs light up
+            let isComplete = false;
+            let bulb1On = false;
+            let bulb2On = false;
+            let bulb3On = false;
+
+            if (switchClosed) {
+                if (type === 'bersiri') {
+                    // In series, if one bulb broken, all off
+                    if (!isBroken) {
+                        isComplete = true;
+                        bulb1On = true;
+                        bulb2On = (bulbCount >= 2);
+                        bulb3On = (bulbCount >= 3);
+                    }
+                } else {
+                    // In parallel, unbroken branches still work
+                    isComplete = true;
+                    bulb1On = true; // First branch ok
+                    bulb2On = (bulbCount >= 2 && !isBroken); // Broken bulb in branch 2
+                    bulb3On = (bulbCount >= 3);
+                }
+            }
+
+            // Calculate brightness percentage
+            let brightnessPct = 0;
+            if (isComplete) {
+                if (type === 'bersiri') {
+                    // More bulbs in series = lower brightness per bulb
+                    brightnessPct = Math.round((batteryCount / bulbCount) * 100);
+                } else {
+                    // Parallel bulbs maintain voltage
+                    brightnessPct = Math.round(batteryCount * 90);
+                }
+            }
+            brightnessPct = Math.min(100, Math.max(0, brightnessPct));
+
+            // Update UI Badges
+            const statusBadge = document.getElementById('circuitStatusBadge');
+            const switchStatusText = document.getElementById('switchStatusText');
+            const switchBtnLabel = document.getElementById('switchBtnLabel');
+            const btnToggleSwitch = document.getElementById('btnToggleSwitch');
+            const brightnessBar = document.getElementById('brightnessBar');
+            const brightnessText = document.getElementById('brightnessText');
+            const canvasFlowStatus = document.getElementById('canvasFlowStatus');
+
+            if (switchClosed) {
+                switchStatusText.textContent = "DITUTUP (Litar Lengkap)";
+                switchStatusText.className = "text-xs font-semibold text-green-600";
+                switchBtnLabel.textContent = "BUKA SUIS";
+                btnToggleSwitch.className = "px-5 py-2.5 rounded-xl font-bold text-sm transition bg-green-600 hover:bg-green-700 text-white shadow-md flex items-center gap-2";
+            } else {
+                switchStatusText.textContent = "TERBUKA (Litar Terputus)";
+                switchStatusText.className = "text-xs font-semibold text-red-500";
+                switchBtnLabel.textContent = "TUTUP SUIS";
+                btnToggleSwitch.className = "px-5 py-2.5 rounded-xl font-bold text-sm transition bg-red-500 hover:bg-red-600 text-white shadow-md flex items-center gap-2";
+            }
+
+            if (isComplete) {
+                statusBadge.textContent = "Litar Lengkap";
+                statusBadge.className = "bg-green-900/80 text-green-200 px-2.5 py-0.5 rounded font-bold";
+                canvasFlowStatus.textContent = `⚡ Arus: ${(batteryCount * 0.5).toFixed(1)} A`;
+            } else {
+                statusBadge.textContent = "Litar Terputus";
+                statusBadge.className = "bg-red-900/80 text-red-200 px-2.5 py-0.5 rounded font-bold";
+                canvasFlowStatus.textContent = "⚡ Arus: 0.0 A";
+            }
+
+            brightnessBar.style.width = brightnessPct + "%";
+            if (brightnessPct === 0) {
+                brightnessText.textContent = "Padam";
+            } else if (brightnessPct < 50) {
+                brightnessText.textContent = `Malap (${brightnessPct}%)`;
+            } else if (brightnessPct <= 90) {
+                brightnessText.textContent = `Terang (${brightnessPct}%)`;
+            } else {
+                brightnessText.textContent = `Sangat Terang! (${brightnessPct}%)`;
+            }
+
+            // Build SVG Elements
+            let svgHTML = '';
+
+            const wireColor = switchClosed && isComplete ? '#38bdf8' : '#64748b';
+            const wireClass = switchClosed && isComplete ? 'flowing-wire' : '';
+
+            // Draw Wire Loop (Series vs Parallel)
+            if (type === 'bersiri') {
+                // Single Loop Series SVG
+                svgHTML += `
+                    <!-- Wire Frame Series -->
+                    <rect x="50" y="40" width="500" height="240" rx="15" fill="none" stroke="${wireColor}" stroke-width="4" class="${wireClass}" />
+
+                    <!-- Battery(ies) Top Center -->
+                    <g transform="translate(250, 25)">
+                        <rect x="0" y="0" width="${batteryCount === 1 ? 70 : 100}" height="30" rx="4" fill="#f59e0b" stroke="#d97706" stroke-width="2"/>
+                        <text x="${batteryCount === 1 ? 35 : 50}" y="20" fill="#1e293b" font-weight="bold" font-size="12" text-anchor="middle">
+                            ${batteryCount === 1 ? '1.5V Bateri' : '3.0V Bateri'}
+                        </text>
+                    </g>
+
+                    <!-- Switch Bottom Left -->
+                    <g transform="translate(100, 280)">
+                        <circle cx="0" cy="0" r="6" fill="#94a3b8" />
+                        <circle cx="60" cy="0" r="6" fill="#94a3b8" />
+                        <line x1="0" y1="0" x2="${switchClosed ? 60 : 45}" y2="${switchClosed ? 0 : -25}" stroke="#ef4444" stroke-width="4" stroke-linecap="round" />
+                        <text x="30" y="20" fill="#cbd5e1" font-size="11" text-anchor="middle">Suis (${switchClosed ? 'Tutup' : 'Buka'})</text>
+                    </g>
+                `;
+
+                // Bulbs along bottom right
+                const startX = 260;
+                const spacing = 90;
+                for (let i = 0; i < bulbCount; i++) {
+                    const bx = startX + (i * spacing);
+                    const by = 280;
+                    const isThisBroken = (isBroken && i === 0);
+                    const isOn = bulb1On && !isThisBroken;
+
+                    svgHTML += renderBulbSVG(bx, by, isOn, isThisBroken, `Mentol ${i+1}`);
+                }
+
+            } else {
+                // Parallel Loop SVG (Multiple Branches)
+                svgHTML += `
+                    <!-- Main Power Outer Loop -->
+                    <path d="M 50 40 L 550 40 L 550 280 L 50 280 Z" fill="none" stroke="${wireColor}" stroke-width="4" class="${wireClass}" />
+
+                    <!-- Battery Top Center -->
+                    <g transform="translate(250, 25)">
+                        <rect x="0" y="0" width="${batteryCount === 1 ? 70 : 100}" height="30" rx="4" fill="#f59e0b" stroke="#d97706" stroke-width="2"/>
+                        <text x="${batteryCount === 1 ? 35 : 50}" y="20" fill="#1e293b" font-weight="bold" font-size="12" text-anchor="middle">
+                            ${batteryCount === 1 ? '1.5V Bateri' : '3.0V Bateri'}
+                        </text>
+                    </g>
+
+                    <!-- Main Switch Bottom Left -->
+                    <g transform="translate(80, 280)">
+                        <circle cx="0" cy="0" r="6" fill="#94a3b8" />
+                        <circle cx="50" cy="0" r="6" fill="#94a3b8" />
+                        <line x1="0" y1="0" x2="${switchClosed ? 50 : 35}" y2="${switchClosed ? 0 : -20}" stroke="#ef4444" stroke-width="4" stroke-linecap="round" />
+                        <text x="25" y="20" fill="#cbd5e1" font-size="11" text-anchor="middle">Suis Utama</text>
+                    </g>
+                `;
+
+                // Branch 1
+                svgHTML += `<path d="M 180 40 L 180 120 L 420 120 L 420 40" fill="none" stroke="${wireColor}" stroke-width="3" class="${wireClass}" />`;
+                svgHTML += renderBulbSVG(300, 120, bulb1On, false, "Mentol 1 (Cabang 1)");
+
+                // Branch 2
+                if (bulbCount >= 2) {
+                    const isThisBroken = isBroken; // Bulb 2 broken in test
+                    const isOn = bulb2On;
+                    svgHTML += `<path d="M 180 120 L 180 200 L 420 200 L 420 120" fill="none" stroke="${wireColor}" stroke-width="3" class="${wireClass}" />`;
+                    svgHTML += renderBulbSVG(300, 200, isOn, isThisBroken, "Mentol 2 (Cabang 2)");
+                }
+
+                // Branch 3
+                if (bulbCount >= 3) {
+                    svgHTML += renderBulbSVG(300, 280, bulb3On, false, "Mentol 3 (Cabang 3)");
+                }
+            }
+
+            svg.innerHTML = svgHTML;
+        }
+
+        // Helper helper to generate bulb SVG
+        function renderBulbSVG(x, y, isOn, isBroken, label) {
+            const glowClass = isOn ? 'bulb-active' : '';
+            const fillBulb = isBroken ? '#ef4444' : (isOn ? '#fef08a' : '#475569');
+            const strokeBulb = isOn ? '#f59e0b' : '#334155';
+
+            return `
+                <g transform="translate(${x}, ${y})" class="${glowClass}">
+                    <!-- Bulb Socket base -->
+                    <rect x="-10" y="8" width="20" height="12" fill="#94a3b8" rx="2" />
+                    <!-- Glass bulb -->
+                    <circle cx="0" cy="-6" r="18" fill="${fillBulb}" stroke="${strokeBulb}" stroke-width="3" />
+                    <!-- Filament inside -->
+                    <path d="M -6 4 L -2 -6 L 2 -6 L 6 4" fill="none" stroke="${isOn ? '#d97706' : '#94a3b8'}" stroke-width="2" />
+                    ${isBroken ? '<text x="0" y="-3" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">❌</text>' : ''}
+                    <text x="0" y="-30" fill="#f8fafc" font-size="10" font-weight="bold" text-anchor="middle">${label}</text>
+                </g>
+            `;
+        }
+
+        const energyDetails = {
+            kimia: {
+                title: "1. Tenaga Kimia (Dalam Sel Kering)",
+                desc: "Tenaga kimia tersimpan dalam bahan aktif di dalam sel kering. Apabila litar melengkapkan laluan, tindak balas kimia bertukar menjadi cas elektrik.",
+                icon: "🧪"
+            },
+            elektrik: {
+                title: "2. Tenaga Elektrik (Melalui Wayar)",
+                desc: "Arus elektrik mengalir membawa tenaga dari terminal positif sel kering melalui wayar penyambung ke mentol.",
+                icon: "⚡"
+            },
+            cahaya_haba: {
+                title: "3. Tenaga Cahaya + Tenaga Haba (Di Mentol)",
+                desc: "Apabila arus elektrik melalui filamen mentol, rintangan menyebabkan filamen menjadi sangat panas (Tenaga Haba) dan memancarkan cahaya terang (Tenaga Cahaya).",
+                icon: "💡"
+            }
+        };
+
+        function showEnergyDetail(type) {
+            playAudio('click');
+            const data = energyDetails[type];
+            if (!data) return;
+
+            document.getElementById('energyIcon').textContent = data.icon;
+            document.getElementById('energyTitle').textContent = data.title;
+            document.getElementById('energyDesc').textContent = data.desc;
+            document.getElementById('energyDetailCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function checkMiniQuiz(isCorrect) {
+            const feedback = document.getElementById('miniQuizFeedback');
+            feedback.classList.remove('hidden');
+            if (isCorrect) {
+                playAudio('correct');
+                feedback.className = "text-xs p-3 rounded-lg font-bold bg-green-500/20 text-green-300 border border-green-500/30";
+                feedback.textContent = "✅ TEPAT SEKALI! Litar selari memastikan jika satu mentol di bilik rosak, laluan litar lain di rumah tetap melengkapkan elektrik!";
+                addStars(10);
+            } else {
+                playAudio('wrong');
+                feedback.className = "text-xs p-3 rounded-lg font-bold bg-red-500/20 text-red-300 border border-red-500/30";
+                feedback.textContent = "❌ Kurang Tepat. Jawapan sebenar ialah B! Litar selari mempunyai laluan bercabang supaya kerosakan satu lampu tidak memadamkan lampu lain.";
+            }
+        }
+
+        // Quiz Data
+        const quizQuestions = [
+            {
+                q: "Apakah 4 komponen utama yang DIPERLUKAN untuk membina satu litar elektrik yang lengkap?",
+                options: [
+                    "Sel kering, wayar penyambung, mentol, dan suis",
+                    "Sel kering, pembaris, mentol, dan kepingan kayu",
+                    "Bateri, suis, mentol, dan air",
+                    "Wayar, mentol, suis, dan magnet"
+                ],
+                answer: 0,
+                explain: "Litar elektrik lengkap sekurang-kurangnya memerlukan 4 komponen utama: Sel kering (sumber tenaga), wayar (pengalir), mentol (beban), dan suis (kawalan)."
+            },
+            {
+                q: "Apakah fungsi utama SUIS dalam satu litar elektrik?",
+                options: [
+                    "Membekalkan tenaga elektrik kepada litar",
+                    "Menyambungkan atau memutuskan aliran arus elektrik",
+                    "Menukarkan tenaga cahaya kepada tenaga elektrik",
+                    "Memanaskan mentol supaya lebih terang"
+                ],
+                answer: 1,
+                explain: "Suis berfungsi menyambungkan litar (suis ditutup) atau memutuskan litar (suis dibuka)."
+            },
+            {
+                q: "Apakah yang akan berlaku kepada kecerahan mentol dalam LITAR BERSIRI apabila bilangan mentol DITAMBAH?",
+                options: [
+                    "Kecerahan mentol menjadi semakin terang",
+                    "Kecerahan mentol kekal sama",
+                    "Kecerahan mentol menjadi semakin malap",
+                    "Mentol akan serta-merta meletup"
+                ],
+                answer: 2,
+                explain: "Dalam Litar Bersiri, tenaga elektrik dikongsi dalam satu laluan. Semakin banyak mentol ditambah, semakin malap kecerahan setiap mentol."
+            },
+            {
+                q: "Nyatakan susunan PERUBAHAN BENTUK TENAGA yang betul apabila suis ditutup dan mentol menyala.",
+                options: [
+                    "Tenaga Elektrik ➔ Tenaga Kimia ➔ Tenaga Cahaya",
+                    "Tenaga Kimia ➔ Tenaga Elektrik ➔ Tenaga Cahaya + Tenaga Haba",
+                    "Tenaga Cahaya ➔ Tenaga Haba ➔ Tenaga Kimia",
+                    "Tenaga Haba ➔ Tenaga Elektrik ➔ Tenaga Kimia"
+                ],
+                answer: 1,
+                explain: "Sel kering mengandungi Tenaga Kimia ➔ bertukar kepada Tenaga Elektrik melalui wayar ➔ bertukar kepada Tenaga Cahaya & Haba di mentol."
+            },
+            {
+                q: "Mengapakah litar di dalam rumah disusun secara LITAR SELARI?",
+                options: [
+                    "Supaya jika satu mentol terbakar, mentol lain di laluan lain TETAP menyala",
+                    "Kerana litar selari tidak memerlukan bateri",
+                    "Supaya semua lampu menjadi malap untuk menjimatkan elektrik",
+                    "Kerana litar selari hanya boleh menggunakan satu wayar"
+                ],
+                answer: 0,
+                explain: "Litar Selari mempunyai beberapa laluan bercabang. Jika satu laluan terputus (mentol rosak), arus masih boleh mengalir melalui laluan bercabang yang lain!"
+            }
+        ];
+
+        let currentQuestionIdx = 0;
+        let quizScore = 0;
+
+        function loadQuestion() {
+            const q = quizQuestions[currentQuestionIdx];
+            document.getElementById('quizProgress').textContent = `Soalan ${currentQuestionIdx + 1} daripada ${quizQuestions.length}`;
+            document.getElementById('quizQuestionText').textContent = q.q;
+
+            const container = document.getElementById('quizOptionsContainer');
+            container.innerHTML = '';
+
+            document.getElementById('quizFeedbackPanel').classList.add('hidden');
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full p-4 text-left font-semibold text-sm sm:text-base border-2 border-slate-200 hover:border-sky-500 rounded-xl transition bg-slate-50 hover:bg-sky-50 text-slate-800 flex items-center justify-between";
+                btn.innerHTML = `<span>${String.fromCharCode(65 + idx)}. ${opt}</span> <i class="fa-regular fa-circle text-slate-400"></i>`;
+                btn.onclick = () => checkQuizAnswer(idx);
+                container.appendChild(btn);
+            });
+        }
+
+        function checkQuizAnswer(selectedIdx) {
+            const q = quizQuestions[currentQuestionIdx];
+            const feedbackPanel = document.getElementById('quizFeedbackPanel');
+            const feedbackTitle = document.getElementById('quizFeedbackTitle');
+            const feedbackDesc = document.getElementById('quizFeedbackDesc');
+
+            // Disable all option buttons
+            const buttons = document.getElementById('quizOptionsContainer').querySelectorAll('button');
+            buttons.forEach(b => b.disabled = true);
+
+            if (selectedIdx === q.answer) {
+                playAudio('correct');
+                quizScore += 10;
+                addStars(10);
+                document.getElementById('quizScoreText').textContent = `Skor: ${quizScore}`;
+
+                buttons[selectedIdx].className = "w-full p-4 text-left font-semibold text-sm sm:text-base border-2 border-green-500 bg-green-50 text-green-900 rounded-xl flex items-center justify-between";
+                buttons[selectedIdx].innerHTML += `<i class="fa-solid fa-circle-check text-green-600"></i>`;
+
+                feedbackPanel.className = "p-4 rounded-xl text-sm font-semibold border space-y-2 bg-green-50 border-green-200 text-green-900";
+                feedbackTitle.innerHTML = `<i class="fa-solid fa-circle-check text-green-600 text-lg"></i> Tahniah! Jawapan Betul (+10 Mata)`;
+            } else {
+                playAudio('wrong');
+                buttons[selectedIdx].className = "w-full p-4 text-left font-semibold text-sm sm:text-base border-2 border-red-400 bg-red-50 text-red-900 rounded-xl flex items-center justify-between";
+                buttons[q.answer].className = "w-full p-4 text-left font-semibold text-sm sm:text-base border-2 border-green-500 bg-green-50 text-green-900 rounded-xl flex items-center justify-between";
+
+                feedbackPanel.className = "p-4 rounded-xl text-sm font-semibold border space-y-2 bg-red-50 border-red-200 text-red-900";
+                feedbackTitle.innerHTML = `<i class="fa-solid fa-circle-xmark text-red-600 text-lg"></i> Jawapan Kurang Tepat`;
+            }
+
+            feedbackDesc.textContent = q.explain;
+            feedbackPanel.classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            playAudio('click');
+            currentQuestionIdx++;
+            if (currentQuestionIdx < quizQuestions.length) {
+                loadQuestion();
+            } else {
+                showQuizResult();
+            }
+        }
+
+        function showQuizResult() {
+            document.getElementById('quizContainer').classList.add('hidden');
+            const resultPanel = document.getElementById('quizResultPanel');
+            resultPanel.classList.remove('hidden');
+
+            document.getElementById('finalScoreDisplay').textContent = `${quizScore} / 50`;
+            const msg = document.getElementById('finalFeedbackMessage');
+
+            if (quizScore >= 40) {
+                msg.textContent = "🌟 TAHNIAH! Anda mendapat Pangkat Pakar Elektrik Sains Tahun 5!";
+            } else {
+                msg.textContent = "👍 Usaha yang baik! Sila ulang kaji modul simulator di Tab 1 & 2 untuk skor lebih tinggi.";
+            }
+        }
+
+        function restartQuiz() {
+            playAudio('click');
+            currentQuestionIdx = 0;
+            quizScore = 0;
+            document.getElementById('quizScoreText').textContent = `Skor: 0`;
+            document.getElementById('quizResultPanel').classList.add('hidden');
+            document.getElementById('quizContainer').classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function addStars(count) {
+            starPoints += count;
+            document.getElementById('starCount').textContent = `⭐ ${starPoints} / 50`;
+        }
+
+        // Initialize App on Window Load
+        window.onload = function() {
+            selectComponent('sel_kering');
+            renderCircuitSVG();
+            loadQuestion();
+        };
+    </script>
+</body>
+</html>
